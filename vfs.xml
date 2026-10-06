@@ -1,0 +1,9 @@
+<vfs>
+  <dir path="/home" />
+  <dir path="/home/user" />
+  <dir path="/home/user/docs" />
+  <file path="/motd" encoding="plain">Добро пожаловать в VFS emulator!</file>
+  <file path="/home/user/notes.txt" encoding="plain">Заметки пользователя</file>
+  <file path="/home/user/docs/readme.txt" encoding="plain">Файл во вложенном каталоге</file>
+  <file path="/home/user/data.txt" encoding="base64">SGVsbG8gVlFTIQ==</file>
+</vfs>

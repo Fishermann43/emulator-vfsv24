@@ -1,0 +1,10 @@
+<vfs>
+  <dir path="/home" />
+  <dir path="/home/student" />
+  <dir path="/home/student/projects" />
+  <dir path="/home/student/projects/vfs" />
+  <dir path="/home/student/projects/vfs/src" />
+  <dir path="/home/student/projects/vfs/src/demo" />
+  <file path="/motd" encoding="plain">Глубокая VFS: уровни каталогов</file>
+  <file path="/home/student/projects/vfs/src/demo/test.txt" encoding="plain">Файл на глубоком уровне</file>
+</vfs>

@@ -1,0 +1,5 @@
+# VFS с уровнями каталогов.
+ls /
+cd /home/student/projects/vfs/src/demo
+ls
+exit

@@ -1,0 +1,8 @@
+<vfs>
+  <dir path="/home" />
+  <dir path="/home/user" />
+  <file path="/motd" encoding="plain">VFS с несколькими файлами</file>
+  <file path="/home/user/one.txt" encoding="plain">Первый файл</file>
+  <file path="/home/user/two.txt" encoding="plain">Второй файл</file>
+  <file path="/home/user/data.txt" encoding="base64">SGVsbG8gZnJvbSBiYXNlNjQh</file>
+</vfs>

@@ -1,0 +1,4 @@
+# VFS с несколькими файлами.
+ls /
+ls /home/user
+exit

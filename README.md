@@ -21,3 +21,21 @@ python3 src/emulator.py
 python3 src/emulator.py --vfs vfs.xml
 python3 src/emulator.py --vfs vfs.xml --script scripts/startup_commands.txt
 ```
+
+## Этап 3: VFS из XML
+Виртуальная файловая система хранится в XML и при запуске
+полностью загружается в память. Двоичные данные — в base64.
+Ошибки загрузки (нет файла, неверный формат) показываются
+в окне эмулятора.
+
+## Запуск
+
+```text
+python3 src/emulator.py --vfs vfs.xml
+python3 src/emulator.py --vfs vfs.xml --script scripts/startup_commands.txt
+```
+
+Варианты VFS: `vfs-min.xml`, `vfs-files.xml`, `vfs-deep.xml`
+(несколько уровней каталогов). Скрипты `scripts/test_min.*`,
+`scripts/test_files.*`, `scripts/test_deep.*` проверяют работу
+с каждым вариантом.

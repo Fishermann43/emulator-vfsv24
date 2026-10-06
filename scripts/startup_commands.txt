@@ -1,5 +1,6 @@
-# Проверка параметров и стартового скрипта (стоп на ошибке).
+# Проверка команд этапов 1-3, работа с VFS.
 ls /
-ls /tmp
+ls /home
+cd /home
+ls
 badcommand
-ls /never-reached
