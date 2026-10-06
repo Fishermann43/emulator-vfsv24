@@ -1,5 +1,6 @@
-"""Вариант 24, этап 1: графический прототип REPL."""
+"""Вариант 24, этап 2: конфигурация и стартовый скрипт."""
 
+import argparse
 import os
 import shlex
 import tkinter as tk
@@ -11,6 +12,14 @@ VFS_NAME = "vfs"
 
 class CommandError(Exception):
     """Ошибка выполнения команды."""
+
+
+class Config:
+    """Параметры запуска эмулятора."""
+
+    def __init__(self, vfs_path, script_path):
+        self.vfs_path = vfs_path
+        self.script_path = script_path
 
 
 def parse(line):
@@ -50,8 +59,9 @@ def prompt():
 class EmulatorApp:
     """Графическое окно эмулятора."""
 
-    def __init__(self, root):
+    def __init__(self, root, config):
         self.root = root
+        self.config = config
         self.root.title(f"Эмулятор VFS [{VFS_NAME}]")
         self.output = scrolledtext.ScrolledText(
             root, state="disabled", width=80, height=24
@@ -61,6 +71,9 @@ class EmulatorApp:
         self.entry.pack(fill="x")
         self.entry.bind("<Return>", self.on_enter)
         self.entry.focus_set()
+        self.write(f"vfs_path={config.vfs_path}\n")
+        self.write(f"script_path={config.script_path}\n")
+        self.run_script(config.script_path)
 
     def write(self, text):
         """Добавляет текст в окно вывода."""
@@ -69,27 +82,60 @@ class EmulatorApp:
         self.output.configure(state="disabled")
         self.output.see("end")
 
-    def on_enter(self, _event):
-        """Обрабатывает ввод команды."""
-        line = self.entry.get()
-        self.entry.delete(0, "end")
+    def run_line(self, line):
+        """Выполняет строку. Возвращает ok, error или exit."""
         self.write(prompt() + line + "\n")
         try:
             result = execute(line)
         except SystemExit:
-            self.root.destroy()
-            return
+            return "exit"
         except CommandError as exc:
             self.write(f"error: {exc}\n")
-            return
+            return "error"
         if result:
             self.write(result + "\n")
+        return "ok"
+
+    def run_script(self, path):
+        """Выполняет стартовый скрипт, стоп при первой ошибке."""
+        if not path or path == "<none>":
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as file:
+                lines = file.readlines()
+        except OSError as exc:
+            self.write(f"error: стартовый скрипт: {exc}\n")
+            return
+        for number, raw in enumerate(lines, 1):
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            status = self.run_line(line)
+            if status == "exit":
+                self.root.destroy()
+                return
+            if status == "error":
+                self.write(f"стоп: ошибка в строке {number}\n")
+                break
+
+    def on_enter(self, _event):
+        """Обрабатывает ввод команды."""
+        line = self.entry.get()
+        self.entry.delete(0, "end")
+        if self.run_line(line) == "exit":
+            self.root.destroy()
 
 
 def main():
     """Запускает графический эмулятор."""
+    parser = argparse.ArgumentParser(description="Эмулятор оболочки")
+    parser.add_argument("--vfs", required=True, help="путь к VFS")
+    parser.add_argument("--script", default="", help="стартовый скрипт")
+    args = parser.parse_args()
+    script = args.script or "<none>"
+    config = Config(vfs_path=args.vfs, script_path=script)
     root = tk.Tk()
-    EmulatorApp(root)
+    EmulatorApp(root, config)
     root.mainloop()
 
 
