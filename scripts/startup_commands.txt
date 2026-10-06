@@ -1,6 +1,15 @@
-# Проверка команд этапов 1-3, работа с VFS.
+# Проверка команд этапов 1-4.
 ls /
 ls /home
 cd /home
 ls
+cd user
+ls
+cat /motd
+cat /home/user/notes.txt
+cat /missing
+uniq /home/user/repeats.txt
+uniq -c /home/user/repeats.txt
+uniq /home
+cd ..
 badcommand

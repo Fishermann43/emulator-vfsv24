@@ -39,3 +39,20 @@ python3 src/emulator.py --vfs vfs.xml --script scripts/startup_commands.txt
 (несколько уровней каталогов). Скрипты `scripts/test_min.*`,
 `scripts/test_files.*`, `scripts/test_deep.*` проверяют работу
 с каждым вариантом.
+
+## Этап 4: Основные команды
+Команды `ls` и `cd` работают с объектом VFS. Новые команды:
+`cat` (содержимое файла) и `uniq` (убрать соседние повторы,
+с флагом `-c` показывает счетчики).
+
+## Запуск
+
+```text
+python3 src/emulator.py --vfs vfs.xml
+python3 src/emulator.py --vfs vfs.xml --script scripts/startup_commands.txt
+```
+
+Варианты VFS: `vfs-min.xml`, `vfs-files.xml`, `vfs-deep.xml`
+(несколько уровней каталогов). Скрипты `scripts/test_min.*`,
+`scripts/test_files.*`, `scripts/test_deep.*` проверяют работу
+с каждым вариантом.

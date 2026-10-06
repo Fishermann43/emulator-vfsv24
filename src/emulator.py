@@ -154,7 +154,7 @@ def parse(line):
     return command, args
 
 
-def execute(line):
+def execute(line, session, vfs):
     """Выполняет команду, возвращает вывод."""
     command, args = parse(line)
     if command is None:
@@ -164,10 +164,92 @@ def execute(line):
             raise CommandError("использование: exit")
         raise SystemExit
     if command == "ls":
-        return "ls " + " ".join(args) if args else "ls"
+        return cmd_ls(args, session, vfs)
     if command == "cd":
-        return "cd " + " ".join(args) if args else "cd"
+        return cmd_cd(args, session, vfs)
+    if command == "cat":
+        return cmd_cat(args, session, vfs)
+    if command == "uniq":
+        return cmd_uniq(args, session, vfs)
     raise CommandError(f"неизвестная команда: {command}")
+
+
+def cmd_ls(args, session, vfs):
+    """Содержимое виртуального каталога."""
+    if len(args) > 1:
+        raise CommandError("использование: ls [путь]")
+    if args:
+        path = vfs.resolve(args[0], session["cwd"])
+    else:
+        path = session["cwd"]
+    return "  ".join(vfs.list_dir(path))
+
+
+def cmd_cd(args, session, vfs):
+    """Меняет виртуальный текущий каталог."""
+    if len(args) > 1:
+        raise CommandError("использование: cd [каталог]")
+    if args:
+        path = vfs.resolve(args[0], session["cwd"])
+    else:
+        path = "/"
+    entry = vfs.entries.get(path)
+    if entry is None or entry.kind != "dir":
+        raise CommandError(f"нет такого каталога: {path}")
+    session["cwd"] = path
+    return ""
+
+
+def cmd_cat(args, session, vfs):
+    """Выводит содержимое файла VFS."""
+    if len(args) != 1:
+        raise CommandError("использование: cat файл")
+    path = vfs.resolve(args[0], session["cwd"])
+    entry = vfs.entries.get(path)
+    if entry is None or entry.kind != "file":
+        raise CommandError(f"нет такого файла: {path}")
+    return entry.content
+
+
+def cmd_uniq(args, session, vfs):
+    """Убирает соседние повторы строк файла."""
+    count_mode = False
+    rest = list(args)
+    if rest and rest[0] == "-c":
+        count_mode = True
+        rest = rest[1:]
+    if len(rest) != 1:
+        raise CommandError("использование: uniq [-c] файл")
+    path = vfs.resolve(rest[0], session["cwd"])
+    entry = vfs.entries.get(path)
+    if entry is None or entry.kind != "file":
+        raise CommandError(f"нет такого файла: {path}")
+    out = []
+    prev = None
+    count = 0
+    for row in entry.content.splitlines():
+        if row == prev:
+            count += 1
+            continue
+        if prev is not None:
+            out.append(_uniq_row(prev, count, count_mode))
+        prev = row
+        count = 1
+    if prev is not None:
+        out.append(_uniq_row(prev, count, count_mode))
+    return "\n".join(out)
+
+
+def _uniq_row(text, count, count_mode):
+    """Форматирует строку вывода uniq."""
+    if count_mode:
+        return f"{count} {text}"
+    return text
+
+
+def prompt_for(session):
+    """Приглашение с именем VFS и каталогом."""
+    return f"{VFS_NAME}:{session['cwd']}$ "
 
 
 def prompt():
@@ -182,6 +264,7 @@ class EmulatorApp:
         self.root = root
         self.config = config
         self.vfs = vfs
+        self.session = {"cwd": "/", "history": []}
         self.root.title(f"Эмулятор VFS [{VFS_NAME}]")
         self.output = scrolledtext.ScrolledText(
             root, state="disabled", width=80, height=24
@@ -208,9 +291,11 @@ class EmulatorApp:
 
     def run_line(self, line):
         """Выполняет строку: ok, error или exit."""
-        self.write(prompt() + line + "\n")
+        self.write(prompt_for(self.session) + line + "\n")
+        if line.strip():
+            self.session["history"].append(line)
         try:
-            result = execute(line)
+            result = execute(line, self.session, self.vfs)
         except SystemExit:
             return "exit"
         except CommandError as exc:

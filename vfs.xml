@@ -6,4 +6,10 @@
   <file path="/home/user/notes.txt" encoding="plain">Заметки пользователя</file>
   <file path="/home/user/docs/readme.txt" encoding="plain">Файл во вложенном каталоге</file>
   <file path="/home/user/data.txt" encoding="base64">SGVsbG8gVlFTIQ==</file>
+  <file path="/home/user/repeats.txt" encoding="plain">apple
+apple
+banana
+banana
+banana
+cherry</file>
 </vfs>
