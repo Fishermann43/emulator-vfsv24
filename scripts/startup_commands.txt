@@ -1,15 +1,15 @@
-# Проверка команд этапов 1-4.
+# Проверка команд этапов 1-5.
 ls /
-ls /home
-cd /home
-ls
-cd user
+cd /home/user
 ls
 cat /motd
-cat /home/user/notes.txt
-cat /missing
-uniq /home/user/repeats.txt
-uniq -c /home/user/repeats.txt
-uniq /home
+uniq -c repeats.txt
+mv notes.txt mynotes.txt
+ls
+chown student mynotes.txt
+mv /home/user/docs /home/user/papers
+ls /home/user/papers
+mv /missing /x
+chown x
 cd ..
 badcommand

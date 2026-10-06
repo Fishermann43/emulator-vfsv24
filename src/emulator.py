@@ -19,11 +19,13 @@ class CommandError(Exception):
 class VfsEntry:
     """Элемент виртуальной файловой системы."""
 
-    def __init__(self, path, kind, content="", encoding="plain"):
+    def __init__(self, path, kind, content="", encoding="plain",
+                 owner="root"):
         self.path = path
         self.kind = kind
         self.content = content
         self.encoding = encoding
+        self.owner = owner
 
 
 class VFS:
@@ -56,9 +58,10 @@ class VFS:
 
     def _add_node(self, node):
         """Добавляет один элемент из XML-узла."""
+        owner = node.get("owner") or "root"
         if node.tag == "dir":
             path = self.normalize(node.get("path") or "/")
-            self.entries[path] = VfsEntry(path, "dir")
+            self.entries[path] = VfsEntry(path, "dir", owner=owner)
         elif node.tag == "file":
             path = self.normalize(node.get("path") or "/")
             encoding = (node.get("encoding") or "plain").lower()
@@ -71,7 +74,7 @@ class VFS:
                     raise RuntimeError(
                         f"ошибка base64 для {path}") from exc
             self.entries[path] = VfsEntry(
-                path, "file", content, encoding)
+                path, "file", content, encoding, owner)
         else:
             raise RuntimeError(f"элемент: {node.tag}")
 
@@ -171,6 +174,10 @@ def execute(line, session, vfs):
         return cmd_cat(args, session, vfs)
     if command == "uniq":
         return cmd_uniq(args, session, vfs)
+    if command == "mv":
+        return cmd_mv(args, session, vfs)
+    if command == "chown":
+        return cmd_chown(args, session, vfs)
     raise CommandError(f"неизвестная команда: {command}")
 
 
@@ -245,6 +252,55 @@ def _uniq_row(text, count, count_mode):
     if count_mode:
         return f"{count} {text}"
     return text
+
+
+def cmd_mv(args, session, vfs):
+    """Перемещает файл или каталог в памяти."""
+    if len(args) != 2:
+        raise CommandError("использование: mv src dst")
+    src = vfs.resolve(args[0], session["cwd"])
+    dst = vfs.resolve(args[1], session["cwd"])
+    entry = vfs.entries.get(src)
+    if entry is None:
+        raise CommandError(f"нет такого файла: {src}")
+    if src == "/":
+        raise CommandError("нельзя переместить корень")
+    target = dst
+    dst_entry = vfs.entries.get(dst)
+    if dst_entry is not None and dst_entry.kind == "dir":
+        base = src.rsplit("/", 1)[1]
+        target = dst.rstrip("/") + "/" + base
+        target = vfs.normalize(target)
+    if target == src or target.startswith(src + "/"):
+        raise CommandError("нельзя внутрь себя")
+    if target in vfs.entries:
+        raise CommandError(f"уже существует: {target}")
+    parent = vfs.parent(target)
+    parent_entry = vfs.entries.get(parent)
+    if parent_entry is None or parent_entry.kind != "dir":
+        raise CommandError(f"нет каталога: {parent}")
+    moved = {}
+    for path, item in vfs.entries.items():
+        if path == src or path.startswith(src + "/"):
+            moved[path] = item
+    for path in moved:
+        del vfs.entries[path]
+    for path, item in moved.items():
+        item.path = target + path[len(src):]
+        vfs.entries[item.path] = item
+    return ""
+
+
+def cmd_chown(args, session, vfs):
+    """Меняет владельца файла в памяти."""
+    if len(args) != 2:
+        raise CommandError("использование: chown owner file")
+    path = vfs.resolve(args[1], session["cwd"])
+    entry = vfs.entries.get(path)
+    if entry is None:
+        raise CommandError(f"нет такого файла: {path}")
+    entry.owner = args[0]
+    return ""
 
 
 def prompt_for(session):
